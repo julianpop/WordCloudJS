@@ -46,7 +46,7 @@ function wordCloud(selector) {
         //Entering and existing words
         cloud
             .transition()
-                .duration(2000)
+                .duration(1000)
                 .style("font-size", function(d) { return d.size + "px"; })
                 .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
@@ -56,7 +56,7 @@ function wordCloud(selector) {
         //Exiting words
         cloud.exit()
             .transition()
-                .duration(2000)
+                .duration(1000)
                 .style('fill-opacity', 1e-6)
                 .attr('font-size', 1)
                 .remove();
@@ -105,7 +105,7 @@ function getWords(i) {
 function showNewWords(vis, i) {
     i = i || 0;
     vis.update(getWords(i ++ % words.length))
-    setTimeout(function() { showNewWords(vis, i + 1)}, 2000)
+    setTimeout(function() { showNewWords(vis, i + 1)}, 1000)
 }
 
 //Create a new instance of the word cloud visualisation.
