@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Word Cloud</title>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/d3.layout.cloud.js"></script>
+<style>
+body {margin:0; background:#000;}
+.word-cloud {display: block; margin: 0 auto; width:100%;}
+</style>
+</head>
+<body>
+                         
+<div style="margin:0 auto; padding:0; width:100%;">
+<script>
+// Encapsulate the word cloud functionality
+function wordCloud(selector) {
+
+    var fill = d3.scale.category20();
+
+    //Construct the word cloud's SVG element
+    var svg = d3.select(selector).append("svg")
+        .attr("class", "word-cloud")
+        .attr("width", 1200)
+        .attr("height", 900)
+        .append("g")
+        .attr("transform", "translate(800,450)");
+
+
+    //Draw the word cloud
+    function draw(words) {
+        var cloud = svg.selectAll("g text")
+                        .data(words, function(d) { return d.text; })
+
+        //Entering words
+        cloud.enter()
+            .append("text")
+            .style("font-family", "Impact")
+            .style("fill", function(d, i) { return fill(i); })
+            .attr("text-anchor", "middle")
+            .attr('font-size', 1)
+            .text(function(d) { return d.text; });
+
+        //Entering and existing words
+        cloud
+            .transition()
+                .duration(2000)
+                .style("font-size", function(d) { return d.size + "px"; })
+                .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .style("fill-opacity", 1);
+
+        //Exiting words
+        cloud.exit()
+            .transition()
+                .duration(2000)
+                .style('fill-opacity', 1e-6)
+                .attr('font-size', 1)
+                .remove();
+    }
+
+    //Use the module pattern to encapsulate the visualisation code. We'll expose only the parts that need to be public.
+    return {
+        //Recompute the word cloud for a new set of words. This method will asycnhronously call draw when the layout has been computed.
+        //The outside world will need to call this function, so make it part of the wordCloud return value.
+        update: function(words) {
+            d3.layout.cloud().size([1200, 900])
+                .words(words)
+                .padding(5)
+                .rotate(function() { return ~~(Math.random() * 2) * 90; })
+                .font("Impact")
+                .fontSize(function(d) { return d.size; })
+                .on("end", draw)
+                .start();
+        }
+    }
+}
+
+//Some sample data - http://en.wikiquote.org/wiki/Opening_lines
+var words = [
+    "gadda gey, dankie, faleminderit, merci, mèsi, chokrane, sahite, choukran, barak bllahu fiik, chnorakaloutioun, thank you, tesekkur edirem, a ni kié, ayùe, me yéga, Дзякую, natôtela, dhanyabaad, tanemmirt, tangio tumas, a ni kié, hvala, trugéré, благодаря, gràcies, salamat, Баркал, wado, zikomo, xièxie, Тавтапу, grazie, hvala",
+    "tak, gha-ana, na som, dank u wel, thank you, dankon, tänan, akpé, akiba, takk fyri, vinaka, kiitos, enachè nuwe, merci, dankewol, gracie, gracias, merkzi, danke, awiliudo izwis, ευχαριστώ, aguyjé, aabhar, mèsi, nagode, mahalo, toda, dhanyavad, köszönöm, takk, imela, terima kasih, taiku, go raibh maith agat, grazie, arigatô",
+	"tanemmirt, dhanyavadagalu, rahmet, អគុណ, matôndo, murakoze, murakoze, 감사합니다, sobodi, tenki, Рахмат, wopila, khob chai, matôndo, gratias ago, paldies, abouï ngan, gr àçie, matondi, ačiū, bedankt, merci, благодарам, misaotra, terima kasih, thank you, nanni, niżżik ħajr, kia ora, aabhari aahe, welalin, bayarlalaa, barka, dhanyabad, subhay",
+	"m-sapo, mercé, miigwetch, takk, бузныг, danki, manana, tashakor, motashakkeram, dziękuję, obrigado, sukriya, diboti, sulpáy, mauruuru, najis tuke, mulţumesc, спасибо, giitu, faafetai lava, singuila, gratzias, thank you, tapadh leibh, хвала, ke ya leboha, marahaba, waita, meharbani, stuutiyi, ďakujem, hvala, hvala, waad mahadsantahay, fofo",
+	"gracias, asante, tack, salamat, mauruuru, rahmat, nandri, rahmat, dhanyavadalu, yekeniele, tualumba, kurre sumanga, teşekkür ederim, meda wo ase, tau, Дякую, shukriya, rahmat, rahmat, cám ơn, malo te ofa, gråces, diolch, jërëjëf, enkosi, kettu'i, a dank, o sheun, quyana, ngiyabonga, eskerrik asko, děkuji, takk, nouari, spas, thank you, mulţam",
+]
+
+//Prepare one of the sample sentences by removing punctuation, creating an array of words and computing a random size attribute.
+function getWords(i) {
+    return words[i]
+            //.replace(/[!\.,:;\?]/g, '')
+            //.split(' ')
+			.replace(/[!\.:;\?]/g, '')
+            .split(',')
+            .map(function(d) {
+                return {text: d, size: 10 + Math.random() * 80};
+            })
+}
+
+//This method tells the word cloud to redraw with a new set of words.
+//In reality the new words would probably come from a server request, user input or some other source.
+function showNewWords(vis, i) {
+    i = i || 0;
+    vis.update(getWords(i ++ % words.length))
+    setTimeout(function() { showNewWords(vis, i + 1)}, 2000)
+}
+
+//Create a new instance of the word cloud visualisation.
+var myWordCloud = wordCloud('body');
+
+//Start cycling through the demo data
+showNewWords(myWordCloud);
+</script>		
+</div>
+        
+</body>
+</html>
